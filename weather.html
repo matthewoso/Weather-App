@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<script
+		src="https://code.jquery.com/jquery-3.1.1.js"
+		integrity="sha256-16cdPddA6VdVInumRGo6IbivbERE8p7CQR3HzTBuELA="
+		crossorigin="anonymous"
+	></script>
+	<style>
+		#box{
+			float: left;
+    		border: 3px solid #73AD21;
+			width: 250px;
+			height: 200px;
+		}
+
+		p{
+			margin-top: 0px;
+			margin-bottom: 0px; 
+
+		}
+
+		img {
+			max-width: 100px;
+		}
+	</style>
+</head>
+<body>
+	<div id="weather">
+		Loading...
+	</div>
+	<script>
+		// TODO: using the response data from api.geonames.org, build an HTML page that displays the weather to the user in a "fun" way
+
+		function getStationName(original) {
+			var names = {
+				"BOULDER MUNI" : "Boulder",
+				"BERTHOUD PASS" : "Berthoud",
+				"ERIE MUNI" : "Erie",
+				"LONGMONT/VBRAND" : "Longmont"
+			}
+
+			if(names[original]) {
+				return names[original];
+			}
+
+			return original;
+		}
+
+		function getWindDir(dir) {
+			if (!dir) {
+				return "(not reported)";
+			}
+			if (dir > 315 || dir <= 45) {
+				return "North";
+			} else if (dir > 45 && dir <= 135) {
+				return "East";
+			} else if (dir > 135 && dir <= 225) {
+				return "South";
+			} else if (dir > 225 && dir <= 315) {
+				return "West";
+			}
+		}
+
+		function getWeatherTempGradient(temp) {
+			temp = tempConvert(temp);
+			var backgroundColor = "Grey";
+			if (temp < 32) {
+				backgroundColor = "DarkBlue";
+			} else if (temp < 40) {
+				backgroundColor = "MediumBlue";
+			} else if (temp < 50) {
+				backgroundColor = "Blue";
+			} else if (temp < 60) {
+				backgroundColor = "LightBlue";
+			} else if (temp < 65) {
+				backgroundColor = "LimeGreen";
+			} else if (temp < 70) {
+				backgroundColor = "LawnGreen";			
+			} else if (temp < 72) {
+				backgroundColor = "Lime";			
+			} else if (temp < 75) {
+				backgroundColor = "Yellow";			
+			} else if (temp < 78) {
+				backgroundColor = "Orange";
+			} else if (temp < 80) {
+				backgroundColor = "DarkOrange";
+			} else if (temp < 90) {
+				backgroundColor = "OrangeRed";
+			} else if (temp < 100) {
+				backgroundColor = "red";
+			}
+			return backgroundColor;
+		}
+
+		function getWindSpeed (windSpeed){
+			if (windSpeed === "undefined"){
+				return "(not reported)";
+			}
+			return windSpeed + " mph";
+		}
+
+		function getTime(datetime){
+			var arr = datetime.split(" ");
+			var time = arr[1];
+			return time;	
+		}
+
+		function convertToGoogle(lat,lng){
+			var latlng = lat + "+" + lng;
+			return "http://maps.google.com/maps?z=5&t=m&q=loc:" + latlng;
+		}
+
+		function tempConvert(temp){
+			var farh = (temp * (9/5)) + 32;
+			return parseInt(farh);
+		}
+
+		function cloudCover (clouds){
+			if (clouds === "n/a"){
+				return "not reported";
+			}
+			return clouds;
+		}
+
+
+
+		$.get('http://api.geonames.org/weatherJSON?north=41&south=39&east=-104&west=-106&username=ertyseidohl', function(res) {
+			console.log(res);
+			$('#weather').empty();
+			for (var obs of res.weatherObservations) {
+				var container = $('<div id="box"></div>');
+				container.css({
+					backgroundColor: getWeatherTempGradient(obs.temperature)
+				});
+				$('<h3>' + getStationName(obs.stationName) + " at " + getTime(obs.datetime) + '</h3>').appendTo(container);
+				$('<p>' +"Temperature is " + tempConvert(obs.temperature) + "º" + '</p>').appendTo(container);
+				$('<p>' + "Wind is from the " + getWindDir(obs.windDirection) + " at " + getWindSpeed(obs.windSpeed) + '</p>').appendTo(container);
+				$('<p>' + "Cloudcover: " + cloudCover(obs.clouds) + '</p>').appendTo(container);
+				$('<p>' + "Dew Point: " + obs.dewPoint + "º   Humidity: "+ obs.humidity + "⁒" + '</p>').appendTo(container);
+				$('<p> <a href="'+ convertToGoogle(obs.lat, obs.lng) + '" target="blank">Location of Observatory in GoogleMaps</a></p>').appendTo(container);
+
+				container.appendTo($('#weather'));
+
+			}
+		});
+	</script>
+
+</body>
+</html>
